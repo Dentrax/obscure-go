@@ -1,8 +1,11 @@
-package types
+package types_test
 
-import "testing"
+import (
+	. "github.com/Dentrax/obscure-go/types"
+	"testing"
+)
 
-func Test_Integer_Inc(t *testing.T) {
+func Test_Inc(t *testing.T) {
 	var tests = []struct {
 		name  string
 		in    int
@@ -31,20 +34,20 @@ func Test_Integer_Inc(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			secInt := NewSecureInt(tt.in).Apply()
+			secInt := NewInt(tt.in).Apply()
 			for i := 0; i < tt.count; i++ {
 				secInt.Inc()
 			}
 			got := secInt.Decrypt()
 
 			if got != tt.want {
-				t.Errorf("init %v, got %+v, want %+v", secInt.initialized, got, tt.want)
+				t.Errorf("init %v, got %+v, want %+v", secInt.GetSelf().Initialized, got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_Integer_Dec(t *testing.T) {
+func Test_Dec(t *testing.T) {
 	var tests = []struct {
 		name  string
 		in    int
@@ -73,20 +76,20 @@ func Test_Integer_Dec(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			secInt := NewSecureInt(tt.in).Apply()
+			secInt := NewInt(tt.in).Apply()
 			for i := 0; i < tt.count; i++ {
 				secInt.Dec()
 			}
 			got := secInt.Decrypt()
 
 			if got != tt.want {
-				t.Errorf("init %v, got %+v, want %+v", secInt.initialized, got, tt.want)
+				t.Errorf("init %v, got %+v, want %+v", secInt.GetSelf().Initialized, got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_Integer_XOR(t *testing.T) {
+func Test_XOR(t *testing.T) {
 	var tests = []struct {
 		name  string
 		value int
@@ -115,36 +118,36 @@ func Test_Integer_XOR(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			secInt := NewSecureInt(tt.value)
-			got := secInt.XOR(tt.value, tt.key)
+			secInt := NewInt(tt.value)
+			got := secInt.GetSelf().XOR(tt.value, tt.key)
 
 			if got != tt.want {
-				t.Errorf("init %v, got %+v, want %+v", secInt.initialized, got, tt.want)
+				t.Errorf("init %v, got %+v, want %+v", secInt.GetSelf().Initialized, got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_Integer_Get(t *testing.T) {
+func Test_Get(t *testing.T) {
 	var tests = []struct {
 		name  string
-		value *SecureInt
-		want  *SecureInt
+		value ISecureInt
+		want  ISecureInt
 	}{
 		{
 			"should get same negative",
-			NewSecureInt(-17).Apply(),
-			NewSecureInt(-17).Apply(),
+			NewInt(-17).Apply(),
+			NewInt(-17).Apply(),
 		},
 		{
 			"should get same zero",
-			NewSecureInt(0).Apply(),
-			NewSecureInt(0).Apply(),
+			NewInt(0).Apply(),
+			NewInt(0).Apply(),
 		},
 		{
 			"should get same positive",
-			NewSecureInt(17).Apply(),
-			NewSecureInt(17).Apply(),
+			NewInt(17).Apply(),
+			NewInt(17).Apply(),
 		},
 	}
 
@@ -166,32 +169,32 @@ func Test_Integer_Get(t *testing.T) {
 	}
 }
 
-func Test_Integer_Set(t *testing.T) {
+func Test_Set(t *testing.T) {
 	var tests = []struct {
 		name  string
 		value int
-		want  *SecureInt
+		want  ISecureInt
 	}{
 		{
 			"should set zero",
 			0,
-			NewSecureInt(0).Apply(),
+			NewInt(0).Apply(),
 		},
 		{
 			"should set negative",
 			-15,
-			NewSecureInt(-15).Apply(),
+			NewInt(-15).Apply(),
 		},
 		{
 			"should set positive",
 			15,
-			NewSecureInt(15).Apply(),
+			NewInt(15).Apply(),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			want := NewSecureInt(0).Apply().Set(tt.value).Decrypt()
+			want := NewInt(0).Apply().Set(tt.value).Decrypt()
 			got := tt.value
 
 			if got != want {
@@ -201,60 +204,54 @@ func Test_Integer_Set(t *testing.T) {
 	}
 }
 
-func Test_Integer_IsEquals(t *testing.T) {
+func Test_IsEquals(t *testing.T) {
 	var tests = []struct {
 		name  string
-		left  *SecureInt
-		right *SecureInt
+		left  ISecureInt
+		right ISecureInt
 		want  bool
 	}{
 		{
 			"should equals defaults",
-			NewSecureInt(0),
-			NewSecureInt(0),
+			NewInt(0),
+			NewInt(0),
 			true,
 		},
 		{
 			"should equals with apply",
-			NewSecureInt(77).Apply(),
-			NewSecureInt(77).Apply(),
+			NewInt(77).Apply(),
+			NewInt(77).Apply(),
 			true,
 		},
 		{
-			"should not equals if no apply",
-			NewSecureInt(0).Apply(),
-			NewSecureInt(0),
-			false,
+			"should equals if no apply",
+			NewInt(0).Apply(),
+			NewInt(0),
+			true,
 		},
 		{
 			"should not equals defaults",
-			NewSecureInt(-77),
-			NewSecureInt(77),
+			NewInt(-77),
+			NewInt(77),
 			false,
 		},
 		{
 			"should not equals with apply",
-			NewSecureInt(-77).Apply(),
-			NewSecureInt(77).Apply(),
+			NewInt(-77).Apply(),
+			NewInt(77).Apply(),
 			false,
 		},
 		{
 			"should equals inc inc inc dec",
-			NewSecureInt(77).Apply().Inc().Inc().Inc().Dec(),
-			NewSecureInt(79).Apply(),
+			NewInt(77).Apply().Inc().Inc().Inc().Dec(),
+			NewInt(79).Apply(),
 			true,
 		},
 		{
 			"should equals dec dec dec inc",
-			NewSecureInt(0).Apply().Dec().Dec().Dec().Inc(),
-			NewSecureInt(-2).Apply(),
+			NewInt(0).Apply().Dec().Dec().Dec().Inc(),
+			NewInt(-2).Apply(),
 			true,
-		},
-		{
-			"should not equals if no apply",
-			NewSecureInt(0).Apply(),
-			NewSecureInt(0),
-			false,
 		},
 	}
 
@@ -268,7 +265,7 @@ func Test_Integer_IsEquals(t *testing.T) {
 	}
 }
 
-func Test_Integer_RandomizeKey(t *testing.T) {
+func Test_RandomizeKey(t *testing.T) {
 	var tests = []struct {
 		name  string
 		value int
@@ -293,13 +290,13 @@ func Test_Integer_RandomizeKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := NewSecureInt(tt.value).Apply()
+			l := NewInt(tt.value).Apply()
 
-			lvb := l.realValue
+			lvb := l.GetSelf().RealValue
 
 			l.RandomizeKey()
 
-			lva := l.realValue
+			lva := l.GetSelf().RealValue
 
 			if lva == lvb {
 				t.Errorf("must be different got %+v, want %+v", lva, lvb)
@@ -326,13 +323,13 @@ func Benchmark_PrimitiveInt(b *testing.B) {
 }
 
 func Benchmark_SecureInt(b *testing.B) {
-	o := NewSecureInt(37).Apply()
-	i := NewSecureInt(17).Apply()
+	o := NewInt(37).Apply()
+	i := NewInt(17).Apply()
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-
 		i.Inc()
 		i.Dec()
 
