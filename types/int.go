@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+	obs "github.com/Dentrax/obscure-go/observer"
 	"math/rand"
 	"time"
 )
@@ -9,6 +11,7 @@ const KEY int = 54343
 
 type ISecureInt interface {
 	Apply() ISecureInt
+	AddWatcher(obs obs.Observer)
 	SetKey(int)
 	Inc() ISecureInt
 	Dec() ISecureInt
@@ -21,18 +24,21 @@ type ISecureInt interface {
 }
 
 type SecureInt struct {
-	key         int
-	RealValue   int
-	fakeValue   int
-	Initialized bool
+	obs.Observable
+	Key           int
+	RealValue     int
+	FakeValue     int
+	Initialized   bool
+	HackDetecting bool
 }
 
 func NewInt(value int) ISecureInt {
 	s := &SecureInt{
-		key:         KEY,
-		RealValue:   value,
-		fakeValue:   value,
-		Initialized: false,
+		Key:           KEY,
+		RealValue:     value,
+		FakeValue:     value,
+		Initialized:   false,
+		HackDetecting: false,
 	}
 
 	s.Apply()
@@ -42,30 +48,34 @@ func NewInt(value int) ISecureInt {
 
 func (i *SecureInt) Apply() ISecureInt {
 	if !i.Initialized {
-		i.RealValue = i.XOR(i.RealValue, i.key)
+		i.RealValue = i.XOR(i.RealValue, i.Key)
 		i.Initialized = true
 	}
 
 	return i
 }
 
+func (i *SecureInt) AddWatcher(obs obs.Observer) {
+	i.AddObserver(obs)
+	i.HackDetecting = true
+}
+
 func (i *SecureInt) SetKey(key int) {
-	i.key = key
+	i.Key = key
 }
 
 func (i *SecureInt) RandomizeKey() {
 	rand.Seed(time.Now().UnixNano())
 
 	i.RealValue = i.Decrypt()
-	i.key = rand.Intn(int(^uint(0) >> 1))
-	i.RealValue = i.XOR(i.RealValue, i.key)
+	i.Key = rand.Intn(int(^uint(0) >> 1))
+	i.RealValue = i.XOR(i.RealValue, i.Key)
 }
 
-func (i *SecureInt) XOR(value int, key int) int {
-	return value ^ key
+func (i *SecureInt) XOR(value int, Key int) int {
+	return value ^ Key
 }
 
-//Why not
 func (i *SecureInt) Get() int {
 	return i.Decrypt()
 }
@@ -75,36 +85,61 @@ func (i *SecureInt) GetSelf() *SecureInt {
 }
 
 func (i *SecureInt) Set(value int) ISecureInt {
-	i.RealValue = i.XOR(value, i.key)
+	i.RealValue = i.XOR(value, i.Key)
+
+	if i.HackDetecting {
+		i.FakeValue = value
+	}
+
 	return i
 }
 
 func (i *SecureInt) Decrypt() int {
 	if !i.Initialized {
 		i.Initialized = false
-		i.fakeValue = 0
+		i.FakeValue = 0
 		i.RealValue = i.XOR(0, 0)
-		i.key = KEY
+		i.Key = KEY
 
 		return 0
 	}
 
-	return i.XOR(i.RealValue, i.key)
+	res := i.XOR(i.RealValue, i.Key)
+
+	if i.HackDetecting && res != i.FakeValue {
+		i.NotifyAll(fmt.Sprintf("hack attempt: %d", i.FakeValue))
+	}
+
+	return res
 }
 
 func (i *SecureInt) Inc() ISecureInt {
-	i.RealValue = i.XOR(i.Decrypt()+1, i.key)
+	next := i.Decrypt() + 1
+
+	i.RealValue = i.XOR(next, i.Key)
+
+	if i.HackDetecting {
+		i.FakeValue = next
+	}
+
 	return i
 }
 
 func (i *SecureInt) Dec() ISecureInt {
-	i.RealValue = i.XOR(i.Decrypt()-1, i.key)
+	next := i.Decrypt() - 1
+
+	i.RealValue = i.XOR(i.Decrypt()-1, i.Key)
+
+	if i.HackDetecting {
+		i.FakeValue = next
+	}
+
 	return i
 }
 
 func (i *SecureInt) IsEquals(o ISecureInt) bool {
-	if i.key != o.GetSelf().key {
-		return i.XOR(i.RealValue, i.key) == i.XOR(o.GetSelf().RealValue, o.GetSelf().key)
+	if i.Key != o.GetSelf().Key {
+		return i.XOR(i.RealValue, i.Key) == i.XOR(o.GetSelf().RealValue, o.GetSelf().Key)
 	}
 
 	return i.RealValue == o.GetSelf().RealValue

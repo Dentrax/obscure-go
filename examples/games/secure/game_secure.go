@@ -6,12 +6,18 @@ import (
 	"os"
 	"time"
 
+	obs "github.com/Dentrax/obscure-go/observer"
 	secure "github.com/Dentrax/obscure-go/types"
 )
 
 func main() {
+	w := obs.CreateWatcher("watcher")
+
 	score := secure.NewInt(0)
 	coin := secure.NewInt(0)
+
+	score.AddWatcher(w)
+	coin.AddWatcher(w)
 
 	scanner := bufio.NewScanner(os.Stdin)
 
