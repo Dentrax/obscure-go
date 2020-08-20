@@ -12,7 +12,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="MIT"></a>
   <a href="https://goreportcard.com/report/github.com/Dentrax/obscure-go"><img src="https://goreportcard.com/badge/github.com/Dentrax/obscure-go?style=flat-square" alt="Go Report"></a>
   <a href="https://github.com/Dentrax/obscure-go/actions?workflow=test"><img src="https://img.shields.io/github/workflow/status/Dentrax/obscure-go/Test?label=build&logo=github&style=flat-square" alt="Build Status"></a>
-  <a href="https://coveralls.io/repos/github/Dentrax/obscure-go/badge.svg?branch=master"><img src="https://img.shields.io/coveralls/github/Dentrax/obscure-go/master?style=flat-square" alt="Build Status"></a>
+  <a href="https://codecov.io/gh/Dentrax/obscure-go"><img src="https://img.shields.io/codecov/c/gh/Dentrax/obscure-go?style=flat-square" alt="Build Status"></a>
   <a href="https://github.com/Dentrax/obscure-go/releases/latest"><img src="https://img.shields.io/github/release/Dentrax/obscure-go.svg?style=flat-square" alt="GitHub release"></a>
 </p>
 
