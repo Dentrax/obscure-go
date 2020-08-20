@@ -23,8 +23,6 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Fetch Repository
         uses: actions/checkout@v2
-      - name: Build
-        run: go build -v .
       - name: Test Unit
         run: go test ./... -v -covermode=count -coverprofile=coverage.out
       - name: Upload Coverage
